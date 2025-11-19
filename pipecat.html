@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pipecat Voice Bot Demo | ResultantAI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #2c3441 0%, #1a1f2e 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px 20px;
+            background: rgba(71, 185, 248, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(71, 185, 248, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #47b9f8, #00ff88);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            color: #a0a0a0;
+            font-size: 1rem;
+        }
+
+        .demo-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(71, 185, 248, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .chat-window {
+            height: 400px;
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .chat-window::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-window::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .chat-window::-webkit-scrollbar-thumb {
+            background: #47b9f8;
+            border-radius: 4px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-label {
+            font-size: 0.75rem;
+            color: #a0a0a0;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .message-bubble {
+            padding: 15px 20px;
+            border-radius: 12px;
+            max-width: 80%;
+            line-height: 1.6;
+        }
+
+        .bot-message .message-bubble {
+            background: linear-gradient(135deg, rgba(71, 185, 248, 0.2), rgba(71, 185, 248, 0.1));
+            border: 1px solid rgba(71, 185, 248, 0.3);
+            float: left;
+            clear: both;
+        }
+
+        .user-message .message-bubble {
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.1));
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            float: right;
+            clear: both;
+        }
+
+        .message::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .input-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(71, 185, 248, 0.3);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 1rem;
+        }
+
+        .input-area input::placeholder {
+            color: #a0a0a0;
+        }
+
+        .input-area input:focus {
+            outline: none;
+            border-color: #47b9f8;
+            box-shadow: 0 0 0 3px rgba(71, 185, 248, 0.1);
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #47b9f8, #2ea3e0);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(71, 185, 248, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #00ff88, #00cc6f);
+            color: #1a1f2e;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 255, 136, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .asset-display {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            border: 2px solid #00ff88;
+            display: none;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .asset-display.active {
+            display: block;
+        }
+
+        .asset-display img {
+            max-width: 100%;
+            border-radius: 8px;
+        }
+
+        .kb-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .kb-modal.active {
+            display: flex;
+        }
+
+        .kb-content {
+            background: #2c3441;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            border: 2px solid #47b9f8;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .kb-content h3 {
+            color: #47b9f8;
+            margin-bottom: 15px;
+        }
+
+        .kb-content p {
+            line-height: 1.6;
+            color: #e0e0e0;
+            margin-bottom: 20px;
+        }
+
+        .downloads {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-bottom: 15px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #00ff88;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+        }
+
+        .footer h3 {
+            color: #47b9f8;
+            margin-bottom: 15px;
+        }
+
+        .footer p {
+            color: #a0a0a0;
+            margin-bottom: 10px;
+        }
+
+        .footer a {
+            color: #00ff88;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .message-bubble {
+                max-width: 90%;
+            }
+
+            .btn {
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎙️ Pipecat Voice Bot Simulator</h1>
+            <p>Interactive demo showing conversation flow, asset display & knowledge base integration</p>
+        </div>
+
+        <div class="demo-container">
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                <span id="statusText">Ready to Start</span>
+            </div>
+
+            <div class="chat-window" id="chatWindow">
+                <div style="text-align: center; color: #a0a0a0; padding: 40px 20px;">
+                    <p style="font-size: 1.2rem; margin-bottom: 10px;">👋 Welcome!</p>
+                    <p>Click "Start Interview" to begin the voice intake simulation</p>
+                </div>
+            </div>
+
+            <div class="asset-display" id="assetDisplay">
+                <h3 style="color: #00ff88; margin-bottom: 15px;">📊 Example Visual</h3>
+                <div style="padding: 40px; background: rgba(255,255,255,0.05); border-radius: 8px; text-align: center;">
+                    <p style="font-size: 3rem; margin-bottom: 10px;">📈</p>
+                    <p style="color: #a0a0a0;">Image/Slide would display here</p>
+                    <p style="color: #a0a0a0; font-size: 0.9rem; margin-top: 10px;">Plasma visualizer remains visible in production version</p>
+                </div>
+            </div>
+
+            <div class="input-area" id="inputArea" style="display: none;">
+                <input type="text" id="userInput" placeholder="Type your response (simulating voice input)..." />
+                <button class="btn btn-secondary" onclick="sendMessage()">Send</button>
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn btn-primary" id="startBtn" onclick="startInterview()">Start Interview</button>
+                <button class="btn btn-secondary" onclick="showExample()" style="display: none;" id="exampleBtn">Show me an example</button>
+                <button class="btn btn-secondary" onclick="askKB()" style="display: none;" id="kbBtn">What does "worker type" mean?</button>
+            </div>
+
+            <div class="downloads" id="downloadSection" style="display: none;">
+                <button class="btn btn-primary" onclick="downloadJSON()">📄 Download JSON</button>
+                <button class="btn btn-secondary" onclick="downloadTranscript()">📝 Download Transcript</button>
+            </div>
+        </div>
+
+        <div class="kb-modal" id="kbModal">
+            <div class="kb-content">
+                <h3>💡 Knowledge Base Answer</h3>
+                <p><strong>Worker Type</strong> refers to the classification of employment relationship:</p>
+                <p><strong>W2 Employee:</strong> Traditional employee with taxes withheld, benefits, set schedule</p>
+                <p><strong>1099 Contractor:</strong> Independent contractor, manages own taxes, flexible arrangement</p>
+                <p><strong>Example:</strong> A full-time software engineer would be W2, while a freelance designer on a project basis would be 1099.</p>
+                <button class="btn btn-primary" onclick="closeKB()">Got it</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            <h3>Built by ResultantAI</h3>
+            <p>This demo simulates the conversation flow, asset display, and KB integration you need.</p>
+            <p>Production version uses Pipecat for real voice, live transcription, and barge-in handling.</p>
+            <p style="margin-top: 20px;">
+                📧 <a href="mailto:chris@resultantai.com">chris@resultantai.com</a> | 
+                📱 <a href="tel:+12403894152">(240) 389-4152</a>
+            </p>
+            <p style="margin-top: 10px;">
+                📅 <a href="https://meetings.hubspot.com/chris4642" target="_blank">Schedule 15-min call</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const conversationFlow = [
+            { type: 'bot', text: 'Hello! I\'m here to help gather information for your hiring needs. This should take about 5 minutes. Ready to begin?' },
+            { type: 'bot', text: 'Great! First question: What position are you hiring for?' },
+            { type: 'bot', text: 'Perfect. What worker type are you looking for - W2 employee or 1099 contractor?' },
+            { type: 'bot', text: 'Got it. What\'s the primary location for this role - remote, hybrid, or in-office?' },
+            { type: 'bot', text: 'Excellent. What\'s your target start date for this position?' },
+            { type: 'bot', text: 'And finally, what\'s the most important quality you\'re looking for in candidates?' },
+            { type: 'bot', text: 'Thank you! I\'ve captured all the key information. Your intake summary and transcript are ready to download.' }
+        ];
+
+        let currentStep = 0;
+        let transcript = [];
+        let conversationData = {};
+
+        function addMessage(type, text) {
+            const chatWindow = document.getElementById('chatWindow');
+            const message = document.createElement('div');
+            message.className = `message ${type}-message`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            
+            message.innerHTML = `
+                <div class="message-label">${type === 'bot' ? '🤖 Bot' : '👤 User'} • ${timestamp}</div>
+                <div class="message-bubble">${text}</div>
+            `;
+            
+            chatWindow.appendChild(message);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+            
+            transcript.push({
+                timestamp: new Date().toISOString(),
+                speaker: type === 'bot' ? 'assistant' : 'user',
+                text: text
+            });
+        }
+
+        function startInterview() {
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('inputArea').style.display = 'flex';
+            document.getElementById('exampleBtn').style.display = 'inline-block';
+            document.getElementById('kbBtn').style.display = 'inline-block';
+            document.getElementById('statusText').textContent = 'Interview in Progress';
+            document.getElementById('chatWindow').innerHTML = '';
+            
+            setTimeout(() => {
+                addMessage('bot', conversationFlow[currentStep].text);
+                currentStep++;
+            }, 500);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const userText = input.value.trim();
+            
+            if (!userText) return;
+            
+            addMessage('user', userText);
+            input.value = '';
+            
+            // Store user response
+            conversationData[`question_${currentStep}`] = userText;
+            
+            if (currentStep < conversationFlow.length) {
+                setTimeout(() => {
+                    addMessage('bot', conversationFlow[currentStep].text);
+                    currentStep++;
+                    
+                    if (currentStep >= conversationFlow.length) {
+                        document.getElementById('inputArea').style.display = 'none';
+                        document.getElementById('exampleBtn').style.display = 'none';
+                        document.getElementById('kbBtn').style.display = 'none';
+                        document.getElementById('downloadSection').style.display = 'flex';
+                        document.getElementById('statusText').textContent = 'Interview Complete';
+                    }
+                }, 1000);
+            }
+        }
+
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        function showExample() {
+            const assetDisplay = document.getElementById('assetDisplay');
+            assetDisplay.classList.add('active');
+            
+            setTimeout(() => {
+                addMessage('bot', 'Here\'s a visual example of what I mean. Does this help clarify?');
+            }, 500);
+            
+            setTimeout(() => {
+                assetDisplay.classList.remove('active');
+            }, 5000);
+        }
+
+        function askKB() {
+            document.getElementById('kbModal').classList.add('active');
+        }
+
+        function closeKB() {
+            document.getElementById('kbModal').classList.remove('active');
+            setTimeout(() => {
+                addMessage('bot', 'Hope that definition helped! Let\'s continue...');
+            }, 300);
+        }
+
+        function downloadJSON() {
+            const summary = {
+                interview_id: 'demo_' + Date.now(),
+                timestamp: new Date().toISOString(),
+                status: 'completed',
+                responses: conversationData,
+                metadata: {
+                    duration_seconds: transcript.length * 15,
+                    question_count: Object.keys(conversationData).length,
+                    completion_rate: 100
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(summary, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'interview_summary.json';
+            a.click();
+        }
+
+        function downloadTranscript() {
+            let transcriptText = 'VOICE INTERVIEW TRANSCRIPT\n';
+            transcriptText += '='.repeat(50) + '\n\n';
+            
+            transcript.forEach(entry => {
+                const time = new Date(entry.timestamp).toLocaleTimeString();
+                const speaker = entry.speaker === 'assistant' ? 'BOT' : 'USER';
+                transcriptText += `[${time}] ${speaker}: ${entry.text}\n\n`;
+            });
+            
+            const blob = new Blob([transcriptText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'interview_transcript.txt';
+            a.click();
+        }
+    </script>
+</body>
+</html>
+```
